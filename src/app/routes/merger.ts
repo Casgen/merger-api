@@ -2,9 +2,8 @@ import express, { Router } from "express";
 import {AxiosResponse, AxiosInstance, Axios, AxiosError} from 'axios';
 import 'cookie-parser';
 
-const router: Router = express.Router();
+export const router: Router = express.Router();
 
-const request = require('request');
 const axios: AxiosInstance = require('axios');
 
 router.get('/me/playlists',(req: express.Request,res: express.Response, err: express.Errback) => {
@@ -19,3 +18,5 @@ router.get('/me/playlists',(req: express.Request,res: express.Response, err: exp
         res.send(error);
     })
 })
+
+module.exports = router;

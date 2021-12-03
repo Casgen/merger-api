@@ -15,18 +15,20 @@ const cookieParser = require('cookie-parser');
  *                              Basic Express Middlewares
  ***********************************************************************************/
 
-var spotifyRouter = require('./app/routes/spotify');
+let spotifyRouter = require('./app/routes/spotify');
+let mergerRouter = require('./app/routes/merger');
 
-app.use(cookieParser());
 app.set('json spaces', 4);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser());
 
 // Handle logs in console during development
 if (process.env.NODE_ENV === 'development' || config.NODE_ENV === 'development') {
   app.use(morgan('dev'));
-  app.use(cors());
+  app.use(cors({
+    origin: 'http://localhost:3000',
+  }));
 }
 
 // Handle security and origin in production
@@ -48,6 +50,7 @@ getFilesWithKeyword('router', __dirname + '/app').forEach((file: string) => {
 })
 
 app.use("/spotify",spotifyRouter);
+app.use("/merger", mergerRouter)
 
 /************************************************************************************
  *                               Express Error Handling
