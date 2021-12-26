@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import {AxiosResponse, AxiosInstance, Axios, AxiosError} from 'axios';
 import 'cookie-parser';
 import { CorsOptions } from "cors";
+import SpotifyWebApi from "spotify-web-api-node";
 
 require('dotenv').config();
 
@@ -10,10 +11,11 @@ const request = require('request');
 const axios: AxiosInstance = require('axios');
 const cors = require('cors');
 
-const spotifyClientId: string | undefined = process.env.SPOTIFY_CLIENT_ID
-const spotifyClientSecret: string | undefined = process.env.SPOTIFY_CLIENT_SECRET
-
-
+var spotifyApi: SpotifyWebApi = new SpotifyWebApi({
+  clientId: process.env.SPOTIFY_CLIENT_ID,
+  clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+  redirectUri: `http://localhost:${process.env.PORT}/spotify/auth/callback`
+})
 
 /**
  * THIS NEEDS TO BE DONE PROPERLY AND SECURELY, see https://expressjs.com/en/resources/middleware/cors.html
@@ -36,7 +38,7 @@ const generateRandomString = (length: number) => {
 
 router.get('/auth/login', (req: express.Request, res: express.Response) => {
 
-    if (spotifyClientId != undefined) { 
+    if (spotifyApi.getCredentials().clientId != undefined) { 
         let scope = "streaming \
                         user-read-email \
                         user-read-private"
@@ -46,9 +48,9 @@ router.get('/auth/login', (req: express.Request, res: express.Response) => {
         let auth_query_parameters = new URLSearchParams({
             response_type: "code",
             scope:scope,
-            redirect_uri: `http://localhost:${process.env.PORT}/spotify/auth/callback`,
+            redirect_uri: spotifyApi.getCredentials().redirectUri as string,
             state:state,
-            client_id:spotifyClientId
+            client_id:spotifyApi.getCredentials().clientId as string
         })
 
         res.redirect('https://accounts.spotify.com/authorize/?' + auth_query_parameters.toString());
@@ -72,11 +74,11 @@ router.get('/auth/callback', (req: express.Request, res: express.Response) => {
       url: 'https://accounts.spotify.com/api/token',
       form: {
         code: code,
-        redirect_uri: `http://localhost:${process.env.PORT}/spotify/auth/callback`,
+        redirect_uri: spotifyApi.getCredentials().redirectUri,
         grant_type: 'authorization_code'
       },
       headers: {
-        'Authorization': 'Basic ' + (Buffer.from(spotifyClientId + ':' + spotifyClientSecret).toString('base64')),
+        'Authorization': 'Basic ' + (Buffer.from(spotifyApi.getCredentials().clientId + ':' + spotifyApi.getCredentials().clientSecret).toString('base64')),
         'Content-Type' : 'application/x-www-form-urlencoded'
       },
       json: true
@@ -84,8 +86,10 @@ router.get('/auth/callback', (req: express.Request, res: express.Response) => {
   
     request.post(authOptions, function(error: Error, response: express.Response, body: any) {
       if (!error && response.statusCode === 200) {
-        res.cookie("access_token",body.access_token)
-        res.redirect('http://localhost:3000/')
+        res.cookie("access_token",body.access_token);
+        spotifyApi.setCredentials({...spotifyApi.getCredentials(), accessToken: body.access_token});
+        console.log({...spotifyApi.getCredentials(), accessToken: body.access_token});
+        res.redirect('http://localhost:3000/');
       }
     });
 })
@@ -110,17 +114,16 @@ router.get('/auth/token', (req: express.Request, res: express.Response) => {
 })
 
 router.get('/playlist/:id', cors(corsOptions), (req: express.Request, res: express.Response) => {
-  axios.get(`https://api.spotify.com/v1/playlists/${req.params.id}`,{
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${req.cookies.access_token}`,
-  }
-  }).then((axiosRes: AxiosResponse) => {
-    res.json(axiosRes.data);
-  }).catch((axiosErr: AxiosError) => {
-    res.send(axiosErr);
+  spotifyApi.getPlaylist(req.params.id).then(
+  (data) => {
+    res.json(data.body);
+  },
+  (err) => {
+    res.send(err);
   })
 })
+
+//router.get('/playlists',)
 
 
 module.exports = router;
