@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import {AxiosResponse, AxiosInstance, Axios, AxiosError} from 'axios';
+import {AxiosResponse, AxiosInstance, AxiosError} from 'axios';
 import 'cookie-parser';
 import { CorsOptions } from "cors";
 import SpotifyWebApi from "spotify-web-api-node";
@@ -88,7 +88,6 @@ router.get('/auth/callback', (req: express.Request, res: express.Response) => {
       if (!error && response.statusCode === 200) {
         res.cookie("access_token",body.access_token);
         spotifyApi.setCredentials({...spotifyApi.getCredentials(), accessToken: body.access_token});
-        console.log({...spotifyApi.getCredentials(), accessToken: body.access_token});
         res.redirect('http://localhost:3000/');
       }
     });

@@ -15,8 +15,9 @@ const cookieParser = require('cookie-parser');
  *                              Basic Express Middlewares
  ***********************************************************************************/
 
-let spotifyRouter = require('./app/routes/spotify');
-let mergerRouter = require('./app/routes/merger');
+const spotifyRouter = require('./app/routes/spotify');
+const mergerRouter = require('./app/routes/merger');
+const youtubeRouter = require('./app/routes/youtube');
 
 app.set('json spaces', 4);
 app.use(express.json());
@@ -50,7 +51,8 @@ getFilesWithKeyword('router', __dirname + '/app').forEach((file: string) => {
 })
 
 app.use("/spotify",spotifyRouter);
-app.use("/merger", mergerRouter)
+app.use("/merger", mergerRouter);
+app.use("/youtube",youtubeRouter);
 
 /************************************************************************************
  *                               Express Error Handling

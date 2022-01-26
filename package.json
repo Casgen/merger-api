@@ -23,14 +23,16 @@
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
     "i": "^0.3.7",
-    "nodemon": "^2.0.14",
+    "nodemon": "^2.0.15",
     "request": "^2.88.2",
     "ts-node": "^9.1.1",
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@googleapis/youtube": "^2.0.0",
     "@types/spotify-api": "0.0.11",
     "@types/spotify-web-api-node": "^5.0.3",
+    "@types/youtube": "0.0.46",
     "axios": "^0.23.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
@@ -41,8 +43,17 @@
     "helmet": "^4.6.0",
     "http-proxy-middleware": "^2.0.1",
     "morgan": "^1.10.0",
-    "spotify-web-api-node": "^5.0.2"
+    "spotify-web-api-node": "^5.0.2",
+    "ytube-api": "^1.4.5"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Casgen/merger-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Casgen/merger-api/issues"
+  },
+  "homepage": "https://github.com/Casgen/merger-api#readme"
 }
