@@ -122,6 +122,22 @@ router.get('/playlist/:id', cors(corsOptions), (req: express.Request, res: expre
   })
 })
 
+router.get('/album/:id', cors(corsOptions), (req: express.Request, res: express.Response) => {
+  spotifyApi.getAlbum(req.params.id).then((data) => {
+    res.json(data.body);
+  }).catch((spotifyErr: Error) => {
+      res.status(500)
+      res.send(spotifyErr);
+    }
+  )
+})
+
+router.get('/artist/:id', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+  spotifyApi.getArtist(req.params.id,(data) => {
+    res.json(data);
+  })
+})
+
 //router.get('/playlists',)
 
 
