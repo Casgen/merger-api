@@ -1,4 +1,4 @@
-import { youtube_v3 } from "@googleapis/youtube";
+import { auth, youtube, youtube_v3 } from "@googleapis/youtube";
 import express, { Router } from "express";
 
 export const router: Router = express.Router();
@@ -25,5 +25,21 @@ router.get("/search", (req: express.Request, res: express.Response, err: express
         })
     }
 });
+
+router.get("/video/:id",(req: express.Request, res: express.Response, err: express.Errback) => {
+    if (req.params.id !== undefined) {
+        youTube.videos.list({
+            auth: api,
+            part: ['contentDetails'],
+            id: [req.params.id]
+        }, (ytErr, ytRes) => {
+            if (!ytErr) {
+                res.send(ytRes?.data).end();
+                return;
+            }
+            res.status(500).send(ytErr).end();
+        })
+    }
+})
 
 module.exports = router;

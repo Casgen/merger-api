@@ -138,6 +138,15 @@ router.get('/artist/:id', cors(corsOptions), (req: express.Request, res: express
   })
 })
 
+router.get('/tracks/:id', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+  spotifyApi.getTrack(req.params.id).then((data) => {
+    res.json(data.body);
+  }).catch((spotifyErr: Error) => {
+    res.status(500)
+    res.send(spotifyErr);
+  })
+})
+
 //router.get('/playlists',)
 
 
