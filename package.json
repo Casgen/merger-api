@@ -50,6 +50,7 @@
     "morgan": "^1.10.0",
     "mysql2": "^2.3.3",
     "spotify-web-api-node": "^5.0.2",
+    "typescript-monads": "^7.2.0",
     "ytube-api": "^1.4.5"
   },
   "author": "",
