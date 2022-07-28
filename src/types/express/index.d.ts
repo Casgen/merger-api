@@ -1,3 +1,5 @@
+import {Session} from "inspector";
+
 declare global {
     namespace Express {
         interface Request {

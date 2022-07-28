@@ -3,7 +3,7 @@ import {AxiosInstance, AxiosError} from 'axios';
 import 'cookie-parser';
 import {CorsOptions} from "cors";
 import SpotifyWebApi from "spotify-web-api-node";
-import Merger from "../interfaces";
+import * as merger from "../interfaces";
 
 require('dotenv').config();
 
@@ -12,7 +12,7 @@ const request = require('request');
 const axios: AxiosInstance = require('axios');
 const cors = require('cors');
 
-var spotifyApi: SpotifyWebApi = new SpotifyWebApi({
+const spotifyApi: SpotifyWebApi = new SpotifyWebApi({
     clientId: process.env.SPOTIFY_CLIENT_ID,
     clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
     redirectUri: `http://localhost:${process.env.PORT}/spotify/auth/callback`
@@ -20,20 +20,12 @@ var spotifyApi: SpotifyWebApi = new SpotifyWebApi({
 
 var refreshInterval: NodeJS.Timeout;
 
-/**
- * THIS NEEDS TO BE DONE PROPERLY AND SECURELY, see https://expressjs.com/en/resources/middleware/cors.html
- */
-const corsOptions: CorsOptions = {
-    origin: 'http://localhost:3000',
-    credentials: true,
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
 
 const generateRandomString = (length: number) => {
-    var text = '';
-    var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-    for (var i = 0; i < length; i++) {
+    for (let i = 0; i < length; i++) {
         text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
     return text;
@@ -89,8 +81,6 @@ router.get('/auth/callback', (req: express.Request, res: express.Response, err: 
                 spotifyApi.setCredentials({...spotifyApi.getCredentials(), accessToken: body.access_token});
                 spotifyApi.setRefreshToken(body.refresh_token);
                 refreshInterval = setInterval(refreshSpotifyToken,body.expires_in*1000);
-                res.cookie("token_obtained", true);
-                res.cookie("token_expiration",body.expires_in)
                 res.redirect('http://localhost:3000/');
                 res.end();
             } else {
@@ -99,7 +89,7 @@ router.get('/auth/callback', (req: express.Request, res: express.Response, err: 
                 res.send({
                     message: "Trying to obtain the access token failed!",
                     stacktrace: err.prototype.stacktrace
-                } as Merger.Error)
+                } as merger.Error)
 
                 res.redirect('http://localhost:3000/');
                 res.end();
@@ -111,7 +101,7 @@ router.get('/auth/callback', (req: express.Request, res: express.Response, err: 
         res.send({
             message: "Authorization request has failed or been denied!",
             stacktrace: err.prototype.stacktrace
-        } as Merger.Error)
+        } as merger.Error)
 
         res.redirect('http://localhost:3000/');
         res.end();
@@ -119,7 +109,7 @@ router.get('/auth/callback', (req: express.Request, res: express.Response, err: 
 
 })
 
-router.get('/refreshToken', cors(corsOptions), () => {
+router.get('/refreshToken', () => {
     clearInterval(refreshInterval);
     spotifyApi.refreshAccessToken().then((spRes) => {
         if (spRes.body.refresh_token)
@@ -137,7 +127,7 @@ router.get('/auth/token', (req: express.Request, res: express.Response) => {
     res.json(spotifyApi.getAccessToken())
 })
 
-router.get('/me', cors(corsOptions), (req: express.Request, res: express.Response) => {
+router.get('/me', (req: express.Request, res: express.Response) => {
     spotifyApi.getMe().then((spRes) => {
         res.json(spRes.body);
         res.end();
@@ -147,7 +137,7 @@ router.get('/me', cors(corsOptions), (req: express.Request, res: express.Respons
     })
 })
 
-router.get('/me/playlists', cors(corsOptions), (req: express.Request, res: express.Response) => {
+router.get('/me/playlists', (req: express.Request, res: express.Response) => {
     spotifyApi.getUserPlaylists().then((spRes) => {
         res.json(spRes.body);
         res.end();
@@ -158,7 +148,7 @@ router.get('/me/playlists', cors(corsOptions), (req: express.Request, res: expre
     })
 })
 
-router.get('/search', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get('/search', (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.query.q !== undefined) {
         spotifyApi.search(req.query.q as string,["album","track","episode","playlist","show","artist"])
             .then((spRes) => {
@@ -174,12 +164,12 @@ router.get('/search', cors(corsOptions), (req: express.Request, res: express.Res
     res.send({
         message: "query is undefined!",
         stacktrace: err.prototype.stacktrace
-    } as Merger.Error)
+    } as merger.Error)
     res.end();
 });
 
 
-router.get('/playlist/:id', cors(corsOptions), (req: express.Request, res: express.Response) => {
+router.get('/playlist/:id', (req: express.Request, res: express.Response) => {
     spotifyApi.getPlaylist(req.params.id).then(
         (data) => {
             res.json(data.body);
@@ -188,7 +178,7 @@ router.get('/playlist/:id', cors(corsOptions), (req: express.Request, res: expre
         })
 })
 
-router.get('/album/:id', cors(corsOptions), (req: express.Request, res: express.Response) => {
+router.get('/album/:id', (req: express.Request, res: express.Response) => {
     spotifyApi.getAlbum(req.params.id).then((data) => {
         res.json(data.body);
     }).catch((spotifyErr: Error) => {
@@ -198,7 +188,7 @@ router.get('/album/:id', cors(corsOptions), (req: express.Request, res: express.
     )
 })
 
-router.get('/track/:id', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get('/track/:id', (req: express.Request, res: express.Response, err: express.Errback) => {
     spotifyApi.getTrack(req.params.id).then((data) => {
         res.json(data.body);
     }).catch((spotifyErr: SpotifyApi.ErrorObject) => {
@@ -208,7 +198,7 @@ router.get('/track/:id', cors(corsOptions), (req: express.Request, res: express.
     })
 })
 
-router.get('/tracks/:ids', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get('/tracks/:ids', (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.params.ids !== undefined) {
 
         let idArray: Array<string> = req.params.ids.split(",");
@@ -235,7 +225,7 @@ router.get('/tracks/:ids', cors(corsOptions), (req: express.Request, res: expres
 })
 
 
-router.put('/player/play', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.put('/player/play', (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.query.device_id !== undefined) {
         if (req.body[0] === undefined) {
             spotifyApi.play({
@@ -266,7 +256,7 @@ router.put('/player/play', cors(corsOptions), (req: express.Request, res: expres
     })
 })
 
-router.put('/player/pause', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.put('/player/pause', (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.query.device_id !== undefined) {
         spotifyApi.pause({
             device_id: req.query.device_id as string
@@ -278,13 +268,13 @@ router.put('/player/pause', cors(corsOptions), (req: express.Request, res: expre
         return;
 
     }
-    let error: Merger.Error = {
+    let error: merger.Error = {
         message: "Device_id wasn't provided!"
     };
     res.status(400).send(error);
 })
 
-router.put('/player/setVolume', cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.put('/player/setVolume', (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.body.value !== undefined && req.body.device_id !== undefined) {
         let deviceId: string = req.body.device_id as string;
         let volumePercent: number = req.body.value as unknown as number;
@@ -296,7 +286,7 @@ router.put('/player/setVolume', cors(corsOptions), (req: express.Request, res: e
         return;
     }
 
-    let error: Merger.Error = {
+    let error: merger.Error = {
         message: "Device_id or value was not provided!",
         stacktrace: err.prototype.stacktrace
     };
@@ -304,7 +294,7 @@ router.put('/player/setVolume', cors(corsOptions), (req: express.Request, res: e
 })
 //TODO: router.get('/playlists',)
 
-router.get("/player/playbackState", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get("/player/playbackState", (req: express.Request, res: express.Response, err: express.Errback) => {
     spotifyApi.getMyCurrentPlaybackState({market: "ES"}).then((spotifyRes) => {
         res.json(spotifyRes.body);
     }).catch((spErr) => {
@@ -312,7 +302,7 @@ router.get("/player/playbackState", cors(corsOptions), (req: express.Request, re
     })
 })
 
-router.put("/player/seek", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.put("/player/seek", (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.query.device_id && req.query.position_ms) {
         spotifyApi.seek(req.query.position_ms as unknown as number,
             {device_id: req.query.device_id as unknown as string}
@@ -323,7 +313,7 @@ router.put("/player/seek", cors(corsOptions), (req: express.Request, res: expres
             res.status(500).send(spErr);
         })
     } else {
-        let error: Merger.Error = {
+        let error: merger.Error = {
             message: "Device_id or value was not provided!",
             stacktrace: err.prototype.stacktrace
         };
@@ -332,7 +322,7 @@ router.put("/player/seek", cors(corsOptions), (req: express.Request, res: expres
     }
 });
 
-router.get("/artist/:id", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get("/artist/:id", (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.params.id !== undefined) {
         spotifyApi.getArtist(req.params.id).then((spRes) => {
             res.status(200).send(spRes.body);
@@ -350,13 +340,13 @@ router.get("/artist/:id", cors(corsOptions), (req: express.Request, res: express
     res.status(400).send({
         message: "id is undefined!",
         stacktrace: err.prototype.stacktrace
-    } as Merger.Error);
+    } as merger.Error);
 
     return;
 });
 
 
-router.get("/artist/:id/topTracks", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get("/artist/:id/topTracks", (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.params.id !== undefined) {
         //TODO: Watch out for the available markets. they could be interfering with the result
         spotifyApi.getArtistTopTracks(req.params.id, "ES").then((spRes) => {
@@ -371,12 +361,12 @@ router.get("/artist/:id/topTracks", cors(corsOptions), (req: express.Request, re
     res.status(400).send({
         message: "id is undefined!",
         stacktrace: err.prototype.stacktrace
-    } as Merger.Error);
+    } as merger.Error);
 
     return;
 });
 
-router.get("/artist/:id/albums", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get("/artist/:id/albums", (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.params.id !== undefined) {
         spotifyApi.getArtistAlbums(req.params.id, {}).then((spRes) => {
             res.status(200).send(spRes.body);
@@ -390,12 +380,12 @@ router.get("/artist/:id/albums", cors(corsOptions), (req: express.Request, res: 
     res.status(400).send({
         message: "id is undefined!",
         stacktrace: err.prototype.stacktrace
-    } as Merger.Error);
+    } as merger.Error);
 
     return;
 });
 
-router.get("/artist/:id/relatedArtists", cors(corsOptions), (req: express.Request, res: express.Response, err: express.Errback) => {
+router.get("/artist/:id/relatedArtists", (req: express.Request, res: express.Response, err: express.Errback) => {
     if (req.params.id !== undefined) {
         //TODO: Watch out for the available markets. they could be interfering with the result
         spotifyApi.getArtistRelatedArtists(req.params.id).then((spRes) => {
@@ -409,7 +399,7 @@ router.get("/artist/:id/relatedArtists", cors(corsOptions), (req: express.Reques
     res.status(400).send({
         message: "id is undefined!",
         stacktrace: err.prototype.stacktrace
-    } as Merger.Error);
+    } as merger.Error);
 
     return;
 });
