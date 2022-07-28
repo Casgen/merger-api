@@ -1,0 +1,20 @@
+{
+	"configurations": {
+		"run": {
+			"adapter": "vscode-node",
+			"configuration": {
+				"request": "launch",
+				"protocol": "auto",
+				"type": "node",
+				"stopOnEntry": true,
+				"console": "integratedTerminal",
+				"runtimeExecutable": "npm",
+				"runtimeArgs": [
+					"run",
+					"dev:nodemon"
+				],
+				"outputCapture": "std"
+			}
+		}
+	}
+}

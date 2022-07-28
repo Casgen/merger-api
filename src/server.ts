@@ -11,6 +11,8 @@ require("dotenv").config();
 const app: Express = express();
 export const router: Router = express.Router();
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
+export const store = new session.MemoryStore();
 /************************************************************************************
  *                              Basic Express Middlewares
  ***********************************************************************************/
@@ -23,14 +25,24 @@ app.set('json spaces', 4);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(session({
+    secret: 'some kinda secret',
+    cookie: { maxAge: 36000000*24, httpOnly: true },
+    saveUninitialized: false,
+    store
+}))
+
 
 // Handle logs in console during development
 if (process.env.NODE_ENV === 'development' || config.NODE_ENV === 'development') {
   app.use(morgan('dev'));
-  app.use(cors({
-    origin: 'http://localhost:3000',
-  }));
-}
+    app.use(
+        cors({
+            origin: "http://localhost:3000",
+            methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
+            credentials: true,
+        })
+    );}
 
 // Handle security and origin in production
 if (process.env.NODE_ENV === 'production' || config.NODE_ENV === 'production') {
