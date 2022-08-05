@@ -1,5 +1,4 @@
-import { youtube_v3 } from "@googleapis/youtube";
-
+import { youtube_v3 } from "@googleapis/youtube"
 
 export interface Error {
 	status?: number,
@@ -28,7 +27,13 @@ export interface PlaylistFull {
 	title: string,
 	creator: User,
 	desc: string,
-	songs: Array<Song>
+	tracks: Array<SpotifyApi.TrackObjectFull | youtube_v3.Schema$Video>
+}
+
+export enum Order {
+	Random,
+	SpotifyFirst,
+	YoutubeFirst
 }
 
 
@@ -40,6 +45,5 @@ export enum PlayerType {
 export interface Song {
 	uri: string,
 	type: PlayerType,
-	object: SpotifyApi.TrackObjectFull | youtube_v3.Schema$Video
 }
 
