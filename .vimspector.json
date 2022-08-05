@@ -4,17 +4,30 @@
 			"adapter": "vscode-node",
 			"configuration": {
 				"request": "launch",
-				"protocol": "auto",
 				"type": "node",
-				"stopOnEntry": true,
 				"console": "integratedTerminal",
 				"runtimeExecutable": "npm",
 				"runtimeArgs": [
 					"run",
-					"dev:nodemon"
+					"dev:nodemon-debug"
 				],
-				"outputCapture": "std"
+				"sourceMaps": true,
+				"port": 9229
 			}
+		},
+		"attach": {
+			"adapter": "vscode-node",
+			"configuration": {
+			    "name": "Nodemon: Attach",
+			    "request": "attach",
+				"port": 9229,
+			    "skipFiles": [
+				"<node_internals>/**"
+			    ],
+				"restart":true,
+			    "type": "node",
+				"protocol": "inspector"
+			},
 		}
 	}
 }
