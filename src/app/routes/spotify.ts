@@ -18,11 +18,15 @@ router.get('/me', spotifyController.meInfo)
 
 router.get('/me/playlists', spotifyController.getUsersPlaylists)
 
+router.get('/me/logout', spotifyController.logout)
+
 router.post('/search', spotifyController.search);
 
 router.get('/playlist/:id', spotifyController.getPlaylist)
 
-router.get('/album/:id', spotifyController.getAlbum)
+router.get('/albums/:id', spotifyController.getAlbum)
+
+router.get('/albums/:id/tracks', spotifyController.getAlbumTracks)
 
 router.get('/track/:id', spotifyController.getTrack)
 

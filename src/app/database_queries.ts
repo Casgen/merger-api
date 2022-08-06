@@ -50,6 +50,9 @@ export const insertSongToUserData = (userId: number, trackUri: string): string =
 	return `INSERT IGNORE INTO liked_users_songs (liked_users_songs.user_id, liked_users_songs.song_uri) VALUES (${userId},'${trackUri}');`
 }
 
+export const selectUserById = (userId: number) => {
+	return `SELECT users.username, users.id, users.img FROM users WHERE users.id = ${userId}`
+}
 
 
 export const getLikedSongsByUser = (userId: number): string => {

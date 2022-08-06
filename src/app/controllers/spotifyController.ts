@@ -22,7 +22,6 @@ const spotifyApi: SpotifyWebApi = new SpotifyWebApi({
 	redirectUri: `http://localhost:${process.env.PORT}/spotify/auth/callback`
 })
 
-
 export const login = (req: express.Request, res: express.Response) => {
 	if (spotifyApi.getCredentials().clientId != undefined) {
 		const scope = "streaming \
@@ -48,6 +47,19 @@ export const login = (req: express.Request, res: express.Response) => {
 	}
 	res.send("Invalid Spotify Client ID!");
 	res.end();
+}
+
+export const logout = (req: express.Request, res: express.Response) => {
+	try {
+		spotifyApi.resetAccessToken();
+		spotifyApi.resetRefreshToken();
+
+		return res.redirect(`${process.env.CLIENT_URL}/`)
+
+	} catch (e: unknown) {
+		console.error(e);
+		return res.status(500).send(createMergerError("Failed to log out!", 500));
+	}
 }
 
 export const authCallback = (req: express.Request, res: express.Response, err: express.Errback) => {
@@ -178,6 +190,24 @@ export const getAlbum = (req: express.Request, res: express.Response) => {
 		res.send(spotifyErr);
 	}
 	)
+}
+
+export const getAlbumTracks = async (req: express.Request, res: express.Response) => {
+	try {
+		if (!req.params.id) throw new Error('Album Id is Invalid!');
+
+		const albumTracks: Array<SpotifyApi.TrackObjectSimplified> = (await spotifyApi.getAlbumTracks(req.params.id as string)).body.items;
+
+		const tracks: Array<SpotifyApi.TrackObjectFull> = await getTracksByUris(albumTracks.map((track) => {
+			return track.id;
+		}));
+
+		return res.send(tracks);
+
+	} catch (e: unknown) {
+		console.error(e);
+		res.status(500).send(createMergerError("Failed to fetch album tracks!"))
+	}
 }
 
 export const getTrack = async (req: express.Request, res: express.Response, err: express.Errback) => {

@@ -8,6 +8,8 @@ import { youtube_v3 } from "@googleapis/youtube/build/v3";
 import * as spotifyController from "./spotifyController";
 import * as youtubeController from "./youtubeController";
 
+require('dotenv').config()
+
 const db: Connection = require("../database");
 
 export const getPlaylist = async (req: express.Request, res: express.Response) => {
@@ -132,33 +134,34 @@ export const login = (req: express.Request, res: express.Response) => {
 	})
 }
 
-export const createPlaylist = (req: express.Request, res: express.Response, err: express.Errback) => {
+export const logout = (req: express.Request, res: express.Response) => {
+
+	if (!isUserAuthenticated(req.session))
+		return res.status(403).send(createMergerError("User didn't have a session in the first place!", 403));
+
+	req.session.destroy()
+
+	return res.redirect(`${process.env.CLIENT_URL}/`)
+}
+
+export const createPlaylist = async (req: express.Request, res: express.Response) => {
 
 	if (!isUserAuthenticated(req.session))
 		return res.status(403).send(createMergerError("User is not authenticated or user id is invalid!", 403));
 
-	const { title, desc } = req.body!;
+	try {
+		const { title, desc } = req.body!;
 
+		const sqlRes: OkPacket = (await db.promise().query(queries.insertPlaylist(title, req.session.userId, desc)))[0] as OkPacket;
 
-	//TODO Maybe chain this better with async/await if possible
-	db.promise()
-		.query(queries.insertPlaylist(title, req.session.userId, desc))
-		.then((sqlRes) => {
-			const lastId: number = (sqlRes[0] as OkPacket).insertId;
-
-			db.promise().query(queries.selectPlaylistByIdAndUser(lastId, req.session.userId))
-				.then((sqlSelRes) => {
-					const createdPlaylist: merger.Playlist = (sqlSelRes[0] as RowDataPacket[])[0] as merger.Playlist;
-					res.status(200).json(createdPlaylist);
-				}).catch((sqlSelErr) => {
-					console.error(sqlSelErr);
-					return res.status(500).send(createMergerError("Selection of the created playlist failed!"));
-				});
-		}).catch((sqlErr) => {
-			console.error(sqlErr);
-			return res.status(500).send(createMergerError("Creation of the playlist failed!"));
-		})
+		return res.json(sqlRes.insertId);
+	} catch (e: unknown) {
+		
+		console.error(e);
+		return res.status(500).send(createMergerError("Failed to create a new playlist!"));
+	}
 }
+
 export const likeTrack = async (req: express.Request, res: express.Response) => {
 
 	if (!isUserAuthenticated(req.session))
@@ -220,6 +223,21 @@ export const addToPlaylist = async (req: express.Request, res: express.Response)
 	}
 }
 
+export const getUser = async (req: express.Request, res: express.Response) => {
+	try {
+		if (!isUserAuthenticated(req.session))
+			return res.status(403).send(createMergerError("User is not authenticated or user id is invalid!", 403));
+
+		const sqlQuery = (await db.promise().query(queries.selectUserById(req.session.userId as number)))[0] as RowDataPacket[];
+
+		return res.send(sqlQuery[0]);
+
+	} catch (e: unknown) {
+		console.error(e)
+		res.status(500).send(createMergerError("Execution of the query failed!", 500))
+	}
+}
+
 
 const requestTracks = async (tracks: Array<merger.Song>): Promise<Array<SpotifyApi.TrackObjectFull | youtube_v3.Schema$Video>> => {
 
@@ -232,7 +250,7 @@ const requestTracks = async (tracks: Array<merger.Song>): Promise<Array<SpotifyA
 	let endIndex = 1;
 
 	for (let i = 1; i < tracks.length; i++) {
-		
+
 		if (isType === tracks[i].type) {
 			endIndex++;
 			if (endIndex !== tracks.length)
@@ -261,6 +279,8 @@ const requestTracks = async (tracks: Array<merger.Song>): Promise<Array<SpotifyA
 		isType = merger.PlayerType.Spotify;
 
 	}
+
+	if (startIndex + 1 === endIndex) return results;
 
 	if (isType === merger.PlayerType.Spotify) {
 		const uris: string[] = tracks.slice(startIndex, endIndex).map(track => track.uri.split(":")[2]);
@@ -332,8 +352,8 @@ export const merge = async (req: express.Request, res: express.Response) => {
 
 		await db.promise().query(tracksQuery);
 
-	res.status(200).send({
-			playlistId:insertId
+		res.status(200).send({
+			playlistId: insertId
 		})
 
 	} catch (e: unknown) {
@@ -408,3 +428,4 @@ const orderYoutubeFirst = (spTracks: Array<SpotifyApi.TrackObjectFull>, ytVideos
 
 	return insertIntoPlaylistQuery;
 }
+
