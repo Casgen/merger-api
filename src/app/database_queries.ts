@@ -44,10 +44,7 @@ export const insertTrack = (trackUri: string): string => {
 
 
 export const insertSongToUserData = (userId: number, trackUri: string): string => {
-	if (isSpotifyUri(trackUri))
-		return `INSERT IGNORE INTO liked_users_songs (liked_users_songs.user_id, liked_users_songs.song_uri) VALUES (${userId},'${trackUri}');`
-
-	return `INSERT IGNORE INTO liked_users_songs (liked_users_songs.user_id, liked_users_songs.song_uri) VALUES (${userId},'${trackUri}');`
+	return `INSERT INTO liked_users_songs (liked_users_songs.user_id, liked_users_songs.song_uri) VALUES (${userId},'${trackUri}');`
 }
 
 export const selectUserById = (userId: number) => {

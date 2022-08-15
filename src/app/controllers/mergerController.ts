@@ -168,11 +168,11 @@ export const likeTrack = async (req: express.Request, res: express.Response) => 
 		return res.status(403).send(createMergerError("User is not authenticated or user id is invalid!", 403));
 
 	try {
-		if (!req.body.uri) res.status(401).send(createMergerError("URI is not valid!"))
+		if (!req.body.uri) return res.status(401).send(createMergerError("URI is not valid!"))
 
 		await db.promise().query(queries.insertTrack(req.body.uri as string));
 
-		db.promise().query(queries.insertSongToUserData(req.session.userId, req.body)).then(() => {
+		db.promise().query(queries.insertSongToUserData(req.session.userId, req.body.uri)).then(() => {
 			return res.status(200);
 		}).catch((err) => {
 			console.error("failed to like a track!", err)
