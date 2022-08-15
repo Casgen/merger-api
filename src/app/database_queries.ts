@@ -1,5 +1,4 @@
-import { youtube_v3 } from "@googleapis/youtube";
-import {  isSpotifyTrackObject, isSpotifyUri, isYoutubeSearchResult } from "./utils";
+import { isSpotifyUri } from "./utils";
 
 export const selectPlaylistByIdAndUser = (id: number, userId: number): string => {
 	return `SELECT playlists.id, playlists.creator, playlists.desc, playlists.title, users.username FROM playlists
@@ -10,6 +9,14 @@ export const selectPlaylistByIdAndUser = (id: number, userId: number): string =>
 
 export const insertPlaylist = (title = "New Playlist", userId: number, desc = ""): string => {
 	return `INSERT INTO playlists (playlists.title,playlists.creator,playlists.desc) VALUES ('${title}',${userId},'${desc}');`
+}
+
+export const insertUser = (username: string, email: string, hashedPassword: string) => {
+	return `INSERT INTO users (username,email,password) VALUES ('${username}','${email}','${hashedPassword}')`
+}
+
+export const selectUserByEmail = (email: string) => {
+	return `SELECT * FROM users WHERE users.email = '${email}'`;
 }
 
 export const selectPlaylistsByUser = (userId: number): string => {
@@ -51,7 +58,6 @@ export const insertSongToUserData = (userId: number, trackUri: string): string =
 }
 
 
-
 export const getLikedSongsByUser = (userId: number): string => {
 	return `SELECT songs.uri, songs.type FROM songs
 		LEFT JOIN liked_users_songs
@@ -59,13 +65,11 @@ export const getLikedSongsByUser = (userId: number): string => {
 		WHERE liked_users_songs.user_id = ${userId};`
 }
 
-export const insertTrackToPlaylist = (track: SpotifyApi.TrackObjectFull | youtube_v3.Schema$Video, playlistId: number): string => {
-	if (isSpotifyTrackObject(track))
-		return `CALL insertSongIntoPlaylist(${playlistId},'${track.uri}');`
+export const selectUserById = (userId: number) => {
+	return `SELECT users.username, users.id, users.img FROM users WHERE users.id = ${userId}`
+}
 
-	if (isYoutubeSearchResult(track) && track.id?.videoId)
-		return `CALL insertSongIntoPlaylist(${playlistId},'${track.id.videoId}');`;
-
-	return `CALL insertSongIntoPlaylist(${playlistId},'${track.id}');`;
+export const insertTrackToPlaylist = (trackId: string, playlistId: number): string => {
+	return `CALL insertSongIntoPlaylist(${playlistId},'${trackId}');`;
 }
 

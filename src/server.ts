@@ -26,31 +26,37 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-    secret: 'some kinda secret',
-    cookie: { maxAge: 36000000*24, httpOnly: true },
-    saveUninitialized: false,
-    store
+	secret: 'aJ7hDh8d1hrpsy8jDd94h32HjA',
+	cookie: { maxAge: 36000000 * 24, httpOnly: true },
+	saveUninitialized: false,
+	store
 }))
+
+app.use((err: express.Errback, req: express.Request, res: express.Response, next: express.NextFunction) => {
+	console.error(err);
+	res.status(500).send(err);
+})
 
 
 // Handle logs in console during development
 if (process.env.NODE_ENV === 'development' || config.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-    app.use(
-        cors({
-            origin: "http://localhost:3000",
-            methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
-            credentials: true,
-        })
-    );}
+	app.use(morgan('dev'));
+	app.use(
+		cors({
+			origin: "http://localhost:3000",
+			methods: ["POST", "PUT", "GET", "OPTIONS", "HEAD"],
+			credentials: true,
+		})
+	);
+}
 
 // Handle security and origin in production
 if (process.env.NODE_ENV === 'production' || config.NODE_ENV === 'production') {
-  app.use(helmet());
+	app.use(helmet());
 }
 
 if (process.env.PORT === undefined) {
-  console.log("just nothing");
+	console.log("just nothing");
 }
 
 /************************************************************************************
@@ -58,13 +64,13 @@ if (process.env.PORT === undefined) {
  ***********************************************************************************/
 
 getFilesWithKeyword('router', __dirname + '/app').forEach((file: string) => {
-  const { router } = require(file);
-  app.use('/', router);
+	const { router } = require(file);
+	app.use('/', router);
 })
 
-app.use("/spotify",spotifyRouter);
+app.use("/spotify", spotifyRouter);
 app.use("/merger", mergerRouter);
-app.use("/youtube",youtubeRouter);
+app.use("/youtube", youtubeRouter);
 
 /************************************************************************************
  *                               Express Error Handling
@@ -72,11 +78,11 @@ app.use("/youtube",youtubeRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  return res.status(500).json({
-    errorName: err.name,
-    message: err.message,
-    stack: err.stack || 'no stack defined'
-  });
+	return res.status(500).json({
+		errorName: err.name,
+		message: err.message,
+		stack: err.stack || 'no stack defined'
+	});
 });
 
 

@@ -22,7 +22,6 @@ const spotifyApi: SpotifyWebApi = new SpotifyWebApi({
 	redirectUri: `http://localhost:${process.env.PORT}/spotify/auth/callback`
 })
 
-
 export const login = (req: express.Request, res: express.Response) => {
 	if (spotifyApi.getCredentials().clientId != undefined) {
 		const scope = "streaming \
@@ -48,6 +47,19 @@ export const login = (req: express.Request, res: express.Response) => {
 	}
 	res.send("Invalid Spotify Client ID!");
 	res.end();
+}
+
+export const logout = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+	try {
+		spotifyApi.resetAccessToken();
+		spotifyApi.resetRefreshToken();
+
+		return res.redirect(`${process.env.CLIENT_URL}/`)
+
+	} catch (e: unknown) {
+		console.error(e);
+		next(e);
+	}
 }
 
 export const authCallback = (req: express.Request, res: express.Response, err: express.Errback) => {
@@ -162,32 +174,73 @@ export const search = async (req: express.Request, res: express.Response) => {
 	return res.status(204).send(createMergerError("Query is undefined!", 204))
 }
 
-export const getPlaylist = (req: express.Request, res: express.Response) => {
-	spotifyApi.getPlaylist(req.params.id).then((data) => {
-		res.json(data.body);
-	}).catch((spErr) => {
-		res.status(500).send(spErr);
-	})
-}
+export const getPlaylist = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
 
-export const getAlbum = (req: express.Request, res: express.Response) => {
-	spotifyApi.getAlbum(req.params.id).then((data) => {
-		res.json(data.body);
-	}).catch((spotifyErr: Error) => {
-		res.status(500)
-		res.send(spotifyErr);
-	}
-	)
-}
-
-export const getTrack = async (req: express.Request, res: express.Response, err: express.Errback) => {
 	try {
-		const spRes = await spotifyApi.getTrack(req.params.id);
+		if (!spotifyApi.getAccessToken()) return res.redirect(`${process.env.CLIENT_URL}/login`);
 
-		return res.send(spRes.body);
+		if (!req.params.id) throw new Error("Playlist id is not defined!");
+
+		const playlistRes: SpotifyApi.SinglePlaylistResponse = (await spotifyApi.getPlaylist(req.params.id)).body;
+
+		return res.json(playlistRes);
+
 	} catch (e: unknown) {
 		console.error(e);
-		res.send(e);
+		next(e);
+	}
+}
+
+export const getAlbum = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+
+	try {
+		if (!spotifyApi.getAccessToken()) return res.redirect(`${process.env.CLIENT_URL}/login`);
+
+		if (!req.params.id) throw new Error("Playlist id is not defined!");
+
+		const albumRes: SpotifyApi.SingleAlbumResponse = (await spotifyApi.getAlbum(req.params.id)).body;
+
+		return res.json(albumRes);
+
+	} catch (e: unknown) {
+		console.error(e);
+		next(e);
+	}
+}
+
+export const getAlbumTracks = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+
+	try {
+		if (!spotifyApi.getAccessToken()) return res.redirect(`${process.env.CLIENT_URL}/login`);
+
+		if (!req.params.id) throw new Error('Album Id is Invalid!');
+
+		const albumTracks: Array<SpotifyApi.TrackObjectSimplified> = (await spotifyApi.getAlbumTracks(
+			req.params.id as string)).body.items;
+
+		const tracks: Array<SpotifyApi.TrackObjectFull> = await getTracksByUris(albumTracks.map((track) => {
+			return track.id;
+		}));
+
+		return res.send(tracks);
+
+	} catch (e: unknown) {
+		console.error(e);
+		next(e);
+	}
+}
+
+export const getTrack = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+
+	try {
+		if (!spotifyApi.getAccessToken()) return res.redirect(`${process.env.CLIENT_URL}/login`);
+
+		const track: SpotifyApi.SingleTrackResponse = (await spotifyApi.getTrack(req.params.id)).body;
+
+		return res.send(track);
+	} catch (e: unknown) {
+		console.error(e);
+		next(e);
 	}
 }
 

@@ -23,6 +23,9 @@ router.put("/addToPlaylist", mergerController.addToPlaylist);
 
 router.put("/merge", mergerController.merge);
 
+router.get("/users/session", mergerController.getUser)
+
+router.get("/users/logout", mergerController.logout)
 
 
 module.exports = router;
